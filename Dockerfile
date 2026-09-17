@@ -4,7 +4,7 @@ FROM node:22-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy all files first
+# Copy all project files
 COPY . .
 
 # Install pnpm globally
@@ -19,5 +19,5 @@ RUN pnpm run build:web
 # Expose port
 EXPOSE 5173
 
-# Start the production server
-CMD ["pnpm", "--filter", "@deepseek-ai/dsh-web-frontend", "run", "dev", "--host", "0.0.0.0", "--port", "5173"]
+# Use the correct dsh web command instead of direct vite
+CMD ["pnpm", "dsh", "web", "--host", "0.0.0.0", "--port", "5173"]
