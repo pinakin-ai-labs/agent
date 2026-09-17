@@ -10,6 +10,7 @@ console.log(`[Entrypoint] Starting DeepSeek Harness on internal port ${TARGET_PO
 console.log(`[Entrypoint] Render ingress proxy will listen on ${LISTEN_HOST}:${LISTEN_PORT}`);
 
 let isReady = false;
+let launchToken = null;
 
 // Start dsh web on 127.0.0.1:5173
 const dshProcess = spawn(
@@ -19,12 +20,11 @@ const dshProcess = spawn(
     'apps/cli/src/bin.ts',
     'web',
     '--port', String(TARGET_PORT),
-    '--no-open',
-    '--trusted-host', 'harness-agent-deepseek.onrender.com', 'dsh-agent-hub.onrender.com'
+    '--no-open'
   ],
   {
     cwd: process.cwd(),
-    stdio: 'inherit',
+    stdio: ['ignore', 'pipe', 'pipe'],
     env: {
       ...process.env,
       NODE_ENV: 'production',
@@ -32,6 +32,20 @@ const dshProcess = spawn(
     }
   }
 );
+
+dshProcess.stdout.on('data', (data) => {
+  const text = data.toString();
+  process.stdout.write(text);
+  const match = text.match(/token=([a-zA-Z0-9_-]+)/);
+  if (match) {
+    launchToken = match[1];
+    console.log(`[Entrypoint] Captured DSH launch token: ${launchToken}`);
+  }
+});
+
+dshProcess.stderr.on('data', (data) => {
+  process.stderr.write(data);
+});
 
 dshProcess.on('error', (err) => {
   console.error('[Entrypoint] Failed to start dsh process:', err);
@@ -48,7 +62,7 @@ function checkTargetReady() {
   const req = http.get(`http://127.0.0.1:${TARGET_PORT}/`, (res) => {
     if (!isReady) {
       isReady = true;
-      console.log(`[Entrypoint] DSH web server is ready! (status: ${res.statusCode})`);
+      console.log(`[Entrypoint] DSH web server is ready! (probe status: ${res.statusCode})`);
     }
   });
   req.on('error', () => {
@@ -62,6 +76,16 @@ const server = http.createServer((req, res) => {
   if (!isReady) {
     res.writeHead(503, { 'Content-Type': 'text/html; charset=utf-8', 'Retry-After': '5' });
     res.end('<html><head><meta http-equiv="refresh" content="3"></head><body style="font-family:sans-serif;display:grid;place-items:center;height:100vh;margin:0;background:#111;color:#eee"><div><h2>DeepSeek Harness is starting up...</h2><p>Please wait a moment while the agent loads.</p></div></body></html>');
+    return;
+  }
+
+  // Auto-authenticate unauthenticated browser visits by attaching the captured launch token
+  if (launchToken && req.method === 'GET' && req.url === '/' && !req.headers.cookie?.includes('dsh_auth')) {
+    res.writeHead(302, {
+      'Location': `/?token=${launchToken}`,
+      'Cache-Control': 'no-store'
+    });
+    res.end();
     return;
   }
 
