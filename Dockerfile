@@ -1,6 +1,9 @@
 # Use Node.js 22 as the base image
 FROM node:22-alpine
 
+# Install git needed for versioning and dependencies
+RUN apk add --no-cache git
+
 # Set working directory
 WORKDIR /app
 
@@ -10,20 +13,18 @@ COPY . .
 # Install pnpm globally
 RUN npm install -g pnpm@11.7.0
 
-# Clean install with no frozen lockfile
+# Install dependencies with flexible lockfile
 RUN pnpm install --no-frozen-lockfile
 
-# Build everything (including web frontend)
-RUN pnpm run build
+# Build the web frontend
+RUN pnpm run build:web
 
-# Expose port
-EXPOSE 5173
+# Expose Render standard port
+EXPOSE 10000
 
-# Set environment variables to simulate SSH connection (disables browser handoff)
-# and configure the server to listen on all interfaces for production deployment
-ENV SSH_CONNECTION="render-deployment"
+# Set environment
 ENV NODE_ENV=production
+ENV PORT=10000
 
-# Use dsh web with production build, no browser opening, and let it bind to default host
-# The SSH_CONNECTION env var will prevent browser opening and should allow network access
-CMD ["pnpm", "dsh", "web", "--port", "5173", "--no-open"]
+# Start via Render ingress proxy: listens on 0.0.0.0:10000 and forwards to loopback dsh web
+CMD ["node", "render-entrypoint.mjs"]
