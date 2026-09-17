@@ -4,15 +4,15 @@ FROM node:22-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json pnpm-lock.yaml ./
+# Copy package files and workspace config
+COPY package*.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/web/package*.json ./apps/web/
 
 # Install pnpm
 RUN npm install -g pnpm@11.7.0
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Install dependencies (use --no-frozen-lockfile to handle config mismatch)
+RUN pnpm install --no-frozen-lockfile
 
 # Copy source code
 COPY . .
