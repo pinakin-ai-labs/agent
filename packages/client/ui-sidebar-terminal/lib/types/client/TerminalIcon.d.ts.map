@@ -1,0 +1,1 @@
+{"version":3,"file":"TerminalIcon.d.ts","sourceRoot":"","sources":["../../../src/client/TerminalIcon.tsx"],"names":[],"mappings":"AAAA,2DAA2D;AAC3D,OAAO,KAAK,EAAE,SAAS,EAAE,MAAM,OAAO,CAAA;AACtC,OAAO,KAAK,EAAE,SAAS,EAAE,MAAM,uCAAuC,CAAA;AAEtE;;;GAGG;AACH,wBAAgB,YAAY,IAAI,SAAS,CAIxC;AAED;;;;GAIG;AACH,wBAAgB,iBAAiB,CAAC,EAAE,IAAS,EAAE,SAAS,EAAE,EAAE,SAAS,GAAG,SAAS,CAKhF"}
