@@ -80,7 +80,7 @@ const server = http.createServer((req, res) => {
   }
 
   // Auto-authenticate unauthenticated browser visits by attaching the captured launch token
-  if (launchToken && req.method === 'GET' && req.url === '/' && !req.headers.cookie?.includes('dsh_auth')) {
+  if (launchToken && req.method === 'GET' && req.url === '/' && !req.headers.cookie?.includes('dsh-auth')) {
     res.writeHead(302, {
       'Location': `/?token=${launchToken}`,
       'Cache-Control': 'no-store'
